@@ -11,6 +11,15 @@ if [ -z "$CLAWDBOT_GATEWAY_TOKEN" ]; then
     echo "Save this token to access the Control UI!"
 fi
 
+# Build trusted proxies JSON array from environment variable
+# Default includes common Docker gateway IPs
+DEFAULT_PROXIES="10.0.0.1,10.0.1.1,10.0.1.2,10.0.2.1,10.0.2.2,10.0.3.1,10.0.3.2,10.0.4.1,172.17.0.1,172.18.0.1,127.0.0.1"
+TRUSTED_PROXIES=${CLAWDBOT_TRUSTED_PROXIES:-$DEFAULT_PROXIES}
+
+# Convert comma-separated list to JSON array
+PROXIES_JSON=$(echo "$TRUSTED_PROXIES" | sed 's/,/", "/g' | sed 's/^/["/' | sed 's/$/"]/')
+echo "Trusted proxies: $PROXIES_JSON"
+
 # Create config directory if it doesn't exist
 mkdir -p /data/.clawdbot
 
@@ -26,7 +35,7 @@ cat > /data/.clawdbot/clawdbot.json << EOF
       "mode": "token",
       "token": "${CLAWDBOT_GATEWAY_TOKEN}"
     },
-    "trustedProxies": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.1"]
+    "trustedProxies": ${PROXIES_JSON}
   },
   "agents": {
     "defaults": {
