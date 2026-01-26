@@ -35,7 +35,10 @@ cat > /data/.clawdbot/clawdbot.json << EOF
       "mode": "token",
       "token": "${CLAWDBOT_GATEWAY_TOKEN}"
     },
-    "trustedProxies": ${PROXIES_JSON}
+    "trustedProxies": ${PROXIES_JSON},
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
   },
   "agents": {
     "defaults": {
