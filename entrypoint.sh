@@ -14,9 +14,9 @@ fi
 # Create config directory if it doesn't exist
 mkdir -p /data/.clawdbot
 
-# Create a minimal config file if none exists
-if [ ! -f /data/.clawdbot/clawdbot.json ]; then
-    cat > /data/.clawdbot/clawdbot.json << EOF
+# Always create/update config to ensure gateway.mode is set
+# (Previous configs may be missing required fields)
+cat > /data/.clawdbot/clawdbot.json << EOF
 {
   "gateway": {
     "mode": "local",
@@ -34,8 +34,7 @@ if [ ! -f /data/.clawdbot/clawdbot.json ]; then
   }
 }
 EOF
-    echo "Created default config at /data/.clawdbot/clawdbot.json"
-fi
+echo "Config written to /data/.clawdbot/clawdbot.json"
 
 # Start the gateway with --allow-unconfigured flag as fallback
 exec node dist/index.js gateway --bind lan --port 18789 --allow-unconfigured
