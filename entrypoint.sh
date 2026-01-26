@@ -49,5 +49,50 @@ cat > /data/.clawdbot/clawdbot.json << EOF
 EOF
 echo "Config written to /data/.clawdbot/clawdbot.json"
 
+# Create auth-profiles.json for API keys / OAuth tokens
+AUTH_DIR="/data/.clawdbot/agents/main/agent"
+mkdir -p "$AUTH_DIR"
+
+# Build auth profiles from environment variables
+AUTH_PROFILES="{}"
+
+# Add Anthropic API key if provided
+if [ -n "$ANTHROPIC_API_KEY" ]; then
+    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$ANTHROPIC_API_KEY" '. + {"anthropic:api": {"provider": "anthropic", "mode": "api_key", "apiKey": $key}}')
+    echo "Added Anthropic API key to auth profiles"
+fi
+
+# Add Claude OAuth token if provided (from claude setup-token)
+if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg token "$CLAUDE_CODE_OAUTH_TOKEN" '. + {"anthropic:claude-cli": {"provider": "anthropic", "mode": "oauth", "accessToken": $token}}')
+    echo "Added Claude OAuth token to auth profiles"
+fi
+
+# Add OpenAI API key if provided
+if [ -n "$OPENAI_API_KEY" ]; then
+    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$OPENAI_API_KEY" '. + {"openai:api": {"provider": "openai", "mode": "api_key", "apiKey": $key}}')
+    echo "Added OpenAI API key to auth profiles"
+fi
+
+# Add OpenRouter API key if provided
+if [ -n "$OPENROUTER_API_KEY" ]; then
+    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$OPENROUTER_API_KEY" '. + {"openrouter:api": {"provider": "openrouter", "mode": "api_key", "apiKey": $key}}')
+    echo "Added OpenRouter API key to auth profiles"
+fi
+
+# Add Gemini API key if provided
+if [ -n "$GEMINI_API_KEY" ]; then
+    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$GEMINI_API_KEY" '. + {"google:api": {"provider": "google", "mode": "api_key", "apiKey": $key}}')
+    echo "Added Gemini API key to auth profiles"
+fi
+
+# Write auth profiles if any keys were added
+if [ "$AUTH_PROFILES" != "{}" ]; then
+    echo "$AUTH_PROFILES" > "$AUTH_DIR/auth-profiles.json"
+    echo "Auth profiles written to $AUTH_DIR/auth-profiles.json"
+else
+    echo "Warning: No API keys or OAuth tokens configured. Add ANTHROPIC_API_KEY, OPENAI_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN to environment variables."
+fi
+
 # Start the gateway with --allow-unconfigured flag as fallback
 exec node dist/index.js gateway --bind lan --port 18789 --allow-unconfigured
