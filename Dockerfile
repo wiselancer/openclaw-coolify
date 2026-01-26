@@ -78,10 +78,14 @@ RUN git clone --depth 1 https://github.com/clawdbot/clawdbot.git . && \
     pnpm ui:install && \
     pnpm ui:build
 
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+
 # Create directories for persistent data and set ownership
 RUN mkdir -p /data/.clawdbot /data/clawd && \
     chown -R clawdbot:clawdbot /data && \
-    chown -R clawdbot:clawdbot /app
+    chown -R clawdbot:clawdbot /app && \
+    chmod +x /app/entrypoint.sh
 
 # Environment variables
 ENV NODE_ENV=production
@@ -102,7 +106,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Switch to non-root user for security
 USER clawdbot
 
-# Default command
-# --allow-unconfigured: start without pre-existing config file
-# --no-auth: allow gateway to start without requiring a gateway token (auth handled by Coolify/Traefik)
-CMD ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789", "--allow-unconfigured", "--no-auth"]
+# Use entrypoint script to handle config generation
+ENTRYPOINT ["/app/entrypoint.sh"]
