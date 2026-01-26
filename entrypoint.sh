@@ -37,6 +37,20 @@ elif [ -n "$OPENROUTER_API_KEY" ]; then
 fi
 echo "Default model: $DEFAULT_MODEL"
 
+# Determine which channels to enable
+TELEGRAM_ENABLED="false"
+DISCORD_ENABLED="false"
+
+if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+    TELEGRAM_ENABLED="true"
+    echo "Telegram enabled"
+fi
+
+if [ -n "$DISCORD_BOT_TOKEN" ]; then
+    DISCORD_ENABLED="true"
+    echo "Discord enabled"
+fi
+
 # Always create/update config to ensure gateway.mode is set
 # (Previous configs may be missing required fields)
 cat > /data/.clawdbot/clawdbot.json << EOF
@@ -52,6 +66,22 @@ cat > /data/.clawdbot/clawdbot.json << EOF
     "trustedProxies": ${PROXIES_JSON},
     "controlUi": {
       "allowInsecureAuth": true
+    }
+  },
+  "web": {
+    "enabled": true
+  },
+  "channels": {
+    "whatsapp": {
+      "enabled": true,
+      "dmPolicy": "open",
+      "allowFrom": ["*"]
+    },
+    "telegram": {
+      "enabled": ${TELEGRAM_ENABLED:-false}
+    },
+    "discord": {
+      "enabled": ${DISCORD_ENABLED:-false}
     }
   },
   "agents": {
