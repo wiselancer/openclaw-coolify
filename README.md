@@ -46,10 +46,8 @@ Before deploying, you'll need:
 Enter the following repository URL:
 
 ```
-https://github.com/YOUR_USERNAME/clawdbot-coolify
+https://github.com/Anuragtech02/clawdbot-coolify
 ```
-
-Or deploy directly from this repo.
 
 ### Step 3: Select Build Pack
 
