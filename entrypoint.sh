@@ -2,7 +2,8 @@
 # Clawdbot Gateway Entrypoint
 # This script ensures the gateway can start with proper configuration
 
-set -e
+# Don't exit on error - we want to see what fails
+set -x
 
 # If no gateway token is set, generate one automatically
 if [ -z "$CLAWDBOT_GATEWAY_TOKEN" ]; then
@@ -28,7 +29,7 @@ DEFAULT_MODEL="anthropic/claude-sonnet-4-5"  # fallback
 if [ -n "$ANTHROPIC_API_KEY" ]; then
     DEFAULT_MODEL="anthropic/claude-sonnet-4-5"
 elif [ -n "$GEMINI_API_KEY" ]; then
-    DEFAULT_MODEL="google/gemini-2.5-pro"
+    DEFAULT_MODEL="google/gemini-3-pro-preview"
 elif [ -n "$OPENAI_API_KEY" ]; then
     DEFAULT_MODEL="openai/gpt-4o"
 elif [ -n "$OPENROUTER_API_KEY" ]; then
@@ -69,58 +70,60 @@ echo "Config written to /data/.clawdbot/clawdbot.json"
 AUTH_DIR="/data/.clawdbot/agents/main/agent"
 mkdir -p "$AUTH_DIR"
 
-# Build auth profiles from environment variables
-AUTH_PROFILES="{}"
-HAS_AUTH=false
+# Build auth profiles JSON directly (avoid jq complexity)
+echo "Building auth profiles..."
 
-# Add Anthropic API key if provided (RECOMMENDED - simplest option)
+# Start JSON object
+AUTH_JSON="{"
+FIRST=true
+
+# Add Anthropic API key if provided
 if [ -n "$ANTHROPIC_API_KEY" ]; then
-    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$ANTHROPIC_API_KEY" '. + {"anthropic:api": {"provider": "anthropic", "mode": "api_key", "apiKey": $key}}')
-    echo "Added Anthropic API key to auth profiles"
-    HAS_AUTH=true
+    [ "$FIRST" = false ] && AUTH_JSON="$AUTH_JSON,"
+    AUTH_JSON="$AUTH_JSON\"anthropic:api\":{\"provider\":\"anthropic\",\"mode\":\"api_key\",\"apiKey\":\"$ANTHROPIC_API_KEY\"}"
+    echo "Added Anthropic API key"
+    FIRST=false
 fi
 
 # Add OpenAI API key if provided
 if [ -n "$OPENAI_API_KEY" ]; then
-    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$OPENAI_API_KEY" '. + {"openai:api": {"provider": "openai", "mode": "api_key", "apiKey": $key}}')
-    echo "Added OpenAI API key to auth profiles"
-    HAS_AUTH=true
+    [ "$FIRST" = false ] && AUTH_JSON="$AUTH_JSON,"
+    AUTH_JSON="$AUTH_JSON\"openai:api\":{\"provider\":\"openai\",\"mode\":\"api_key\",\"apiKey\":\"$OPENAI_API_KEY\"}"
+    echo "Added OpenAI API key"
+    FIRST=false
 fi
 
 # Add OpenRouter API key if provided
 if [ -n "$OPENROUTER_API_KEY" ]; then
-    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$OPENROUTER_API_KEY" '. + {"openrouter:api": {"provider": "openrouter", "mode": "api_key", "apiKey": $key}}')
-    echo "Added OpenRouter API key to auth profiles"
-    HAS_AUTH=true
+    [ "$FIRST" = false ] && AUTH_JSON="$AUTH_JSON,"
+    AUTH_JSON="$AUTH_JSON\"openrouter:api\":{\"provider\":\"openrouter\",\"mode\":\"api_key\",\"apiKey\":\"$OPENROUTER_API_KEY\"}"
+    echo "Added OpenRouter API key"
+    FIRST=false
 fi
 
 # Add Gemini API key if provided
 if [ -n "$GEMINI_API_KEY" ]; then
-    AUTH_PROFILES=$(echo "$AUTH_PROFILES" | jq --arg key "$GEMINI_API_KEY" '. + {"google:api": {"provider": "google", "mode": "api_key", "apiKey": $key}}')
-    echo "Added Gemini API key to auth profiles"
-    HAS_AUTH=true
+    [ "$FIRST" = false ] && AUTH_JSON="$AUTH_JSON,"
+    AUTH_JSON="$AUTH_JSON\"google:api\":{\"provider\":\"google\",\"mode\":\"api_key\",\"apiKey\":\"$GEMINI_API_KEY\"}"
+    echo "Added Gemini API key"
+    FIRST=false
 fi
+
+# Close JSON object
+AUTH_JSON="$AUTH_JSON}"
 
 # Write auth profiles if any keys were added
-if [ "$HAS_AUTH" = true ]; then
-    echo "$AUTH_PROFILES" > "$AUTH_DIR/auth-profiles.json"
+if [ "$FIRST" = false ]; then
+    echo "$AUTH_JSON" > "$AUTH_DIR/auth-profiles.json"
     echo "Auth profiles written to $AUTH_DIR/auth-profiles.json"
-fi
-
-# Handle Claude setup-token separately (requires clawdbot CLI to process)
-if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ "$HAS_AUTH" = false ]; then
-    echo "CLAUDE_CODE_OAUTH_TOKEN detected but setup-tokens require CLI processing."
-    echo "For easiest setup, use ANTHROPIC_API_KEY instead."
-    echo "Get an API key from: https://console.anthropic.com/settings/keys"
-fi
-
-if [ "$HAS_AUTH" = false ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+else
     echo ""
     echo "=========================================="
     echo "WARNING: No API keys configured!"
     echo "=========================================="
     echo "Add one of these environment variables in Coolify:"
-    echo "  - ANTHROPIC_API_KEY (recommended) - get from https://console.anthropic.com/settings/keys"
+    echo "  - ANTHROPIC_API_KEY - get from https://console.anthropic.com/settings/keys"
+    echo "  - GEMINI_API_KEY - get from https://aistudio.google.com/apikey"
     echo "  - OPENAI_API_KEY - get from https://platform.openai.com/api-keys"
     echo "  - OPENROUTER_API_KEY - get from https://openrouter.ai/keys"
     echo "=========================================="
