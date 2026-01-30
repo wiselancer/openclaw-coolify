@@ -12,8 +12,8 @@ if [ -z "$OPENCLAW_GATEWAY_TOKEN" ]; then
 fi
 
 # Build trusted proxies JSON array from environment variable
-# Default includes common Docker gateway IPs
-DEFAULT_PROXIES="10.0.0.1,10.0.1.1,10.0.1.2,10.0.2.1,10.0.2.2,10.0.3.1,10.0.3.2,10.0.4.1,172.17.0.1,172.18.0.1,127.0.0.1"
+# Default includes common Docker gateway IPs and ranges
+DEFAULT_PROXIES="10.0.0.1,10.0.1.1,10.0.1.2,10.0.2.1,10.0.2.2,10.0.3.1,10.0.3.2,10.0.4.1,172.16.0.1,172.17.0.1,172.18.0.1,172.19.0.1,172.20.0.1,127.0.0.1,10.0.21.2"
 TRUSTED_PROXIES=${OPENCLAW_TRUSTED_PROXIES:-$DEFAULT_PROXIES}
 
 # Convert comma-separated list to JSON array
