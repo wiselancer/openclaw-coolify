@@ -113,8 +113,7 @@ if [ "$SHOULD_REGENERATE" = true ]; then
     "bind": "${OPENCLAW_GATEWAY_BIND:-lan}",
     "port": ${OPENCLAW_GATEWAY_PORT:-18789},
     "auth": {
-      "mode": "token",
-      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+      "mode": "none"
     },
     "trustedProxies": ${PROXIES_JSON},
     "controlUi": {
